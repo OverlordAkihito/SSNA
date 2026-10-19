@@ -32,7 +32,7 @@ Or double-click `run.bat` after setup.
 
 At startup the app scans camera indexes 0 through 7. Choose a camera and press **Start camera**. Use **Refresh** after plugging in a device. Choose the luminous landmark-dot filter or the existing face-contour filter, adjust contour colour and thickness, change tracking smoothing, toggle mirroring, or turn the effect off. Preferences are stored with Windows QSettings; camera frames and landmarks are not saved.
 
-The dot filter uses MediaPipe's detected face-mesh landmarks for the face outline, eyebrows, eyelids/eyes, irises, nose and lips. White dots sit on individual landmarks; a soft magenta halo accents the eye regions. The landmarks are painted on a transparent layer over the preview and use the same aspect-fit frame rectangle, so letterboxing and window resizing do not shift the overlay. The selected mirror option is applied to the frame before detection and display.
+The dot filter uses MediaPipe's detected face-mesh landmarks for the face outline, eyebrows, eyelids/eyes, irises, nose and lips. Pearl-white dots sit on individual landmarks; a brighter magenta glow is centered on each detected iris, with pale highlights at the center. The landmarks are painted on a transparent layer over the preview and use the same aspect-fit frame rectangle, so letterboxing and window resizing do not shift the overlay. The selected mirror option is applied to the frame before detection and display.
 
 ## What “auto-tracking” means here
 

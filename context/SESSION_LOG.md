@@ -32,3 +32,8 @@ Use a date and short heading. Include outcome, important files/decisions, checks
 - Updated README headings/definition to satisfy keeper validation and document what tracking means. Replaced stale social-app/keeper-only overview, requirements, architecture, and security context with the actual camera app scope; added local-only/model-install decisions and updated work state and handoff.
 - Checks: 5 tracker tests PASS; `compileall` PASS; `pip check` PASS; pinned model SHA-256 PASS; offscreen UI and MediaPipe blank-frame smoke PASS. Windows camera device query returned no devices, so real webcam/camera permission behavior remains unverified.
 - Next: run on a Windows 11 computer with webcam and validate the actual capture/contour lifecycle, then update statuses from observed behavior.
+
+## 2026-10-19 — Reference-style dot refinement
+
+- Tuned the live dot renderer toward the supplied image: pearl-white landmarks are more legible, and the vivid magenta accent follows detected iris-center landmarks rather than tinting every eye point. Added a synthetic rendered-pixel assertion for the iris glow and updated README/requirements/handoff notes.
+- Latest checks: 12 unit tests, syntax compilation, context synchronization/validation, and diff whitespace check. Real-camera appearance remains unverified because no physical camera was exposed.

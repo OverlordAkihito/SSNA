@@ -4,7 +4,7 @@ from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QApplication
 
 from shet_shet.preview import CameraPreview
-from shet_shet.landmarks import FACE_DOTS
+from shet_shet.landmarks import EYE_CENTERS, FACE_DOTS
 from shet_shet.tracking import FaceShape, FaceTrack
 
 
@@ -75,6 +75,11 @@ class CameraPreviewTests(unittest.TestCase):
         landmark = points[landmark_index]
         pixel = canvas.pixelColor(preview.map_landmark(landmark).toPoint())
         self.assertGreater(max(pixel.red(), pixel.green(), pixel.blue()), 100)
+        iris_center = preview.map_landmark(points[EYE_CENTERS[0]]).toPoint()
+        iris_pixel = canvas.pixelColor(iris_center.x() + 5, iris_center.y())
+        self.assertGreater(iris_pixel.red(), iris_pixel.green() * 2)
+        self.assertGreater(iris_pixel.blue(), iris_pixel.green() * 2)
+        self.assertGreater(iris_pixel.red(), 70)
         preview.close()
 
 

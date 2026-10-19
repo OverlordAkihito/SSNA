@@ -36,13 +36,14 @@ LIPS = (
 )
 LEFT_IRIS = (474, 475, 476, 477)
 RIGHT_IRIS = (469, 470, 471, 472)
+EYE_CENTERS = (468, 473)
 
-EYE_DOTS = tuple(sorted(set(LEFT_EYE + RIGHT_EYE + LEFT_IRIS + RIGHT_IRIS)))
+EYE_DOTS = tuple(sorted(set(LEFT_EYE + RIGHT_EYE + LEFT_IRIS + RIGHT_IRIS + EYE_CENTERS)))
 EYEBROW_DOTS = tuple(sorted(set(LEFT_EYEBROW + RIGHT_EYEBROW)))
 NOSE_DOTS = tuple(sorted(set(NOSE)))
 LIP_DOTS = tuple(sorted(set(LIPS)))
 FACE_DOTS = tuple(sorted(set(FACE_OVAL + EYEBROW_DOTS + EYE_DOTS + NOSE_DOTS + LIP_DOTS)))
 
-# Eye and iris points get the magenta halo. Larger pearl dots mark stable,
-# visually useful anchors without adding any inferred positions.
-EYE_ANCHORS = frozenset((33, 133, 263, 362, 469, 474, 1, 61, 291, 152))
+# Larger pearl dots mark stable, visually useful landmarks without adding any
+# inferred positions. Iris centers anchor the magenta glow to detected points.
+EYE_ANCHORS = frozenset((33, 133, 263, 362, 468, 469, 473, 474, 1, 61, 291, 152))

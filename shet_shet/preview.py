@@ -6,7 +6,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
-from .landmarks import EYE_ANCHORS, EYE_DOTS, FACE_DOTS, FACE_OVAL, LEFT_EYE, LEFT_IRIS, RIGHT_EYE, RIGHT_IRIS
+from .landmarks import EYE_ANCHORS, EYE_CENTERS, FACE_DOTS, FACE_OVAL
 from .tracking import FaceTrack
 
 
@@ -105,44 +105,44 @@ class CameraPreview(QWidget):
         if not valid:
             return
         scale = min(rect.width() / 640.0, rect.height() / 480.0)
-        radius = max(1.45, min(2.6, 1.9 * scale))
+        radius = max(1.8, min(3.5, 3.0 * scale))
 
-        # Draw one restrained pink halo around each eye before the individual dots.
-        for eye_indices in (LEFT_EYE + LEFT_IRIS, RIGHT_EYE + RIGHT_IRIS):
-            eye_indices = tuple(i for i in eye_indices if i < len(points))
-            if not eye_indices:
+        # Anchor a saturated but soft glow to each detected iris center.
+        for index in EYE_CENTERS:
+            if index >= len(points):
                 continue
-            eye_points = [self._map(points[i], rect) for i in eye_indices]
-            left = min(point.x() for point in eye_points)
-            right = max(point.x() for point in eye_points)
-            top = min(point.y() for point in eye_points)
-            bottom = max(point.y() for point in eye_points)
-            if right - left < 2 or bottom - top < 1:
-                continue
-            center = QPointF((left + right) / 2, (top + bottom) / 2)
-            glow_x = max(9.0, (right - left) * 0.72)
-            glow_y = max(7.0, (bottom - top) * 1.5)
-            gradient = QRadialGradient(center, max(glow_x, glow_y))
-            gradient.setColorAt(0.0, QColor(255, 30, 142, 72))
-            gradient.setColorAt(0.55, QColor(255, 30, 142, 32))
-            gradient.setColorAt(1.0, QColor(255, 30, 142, 0))
+            center = self._map(points[index], rect)
+            glow_radius = max(10.0, radius * 5.6)
+            gradient = QRadialGradient(center, glow_radius)
+            gradient.setColorAt(0.0, QColor(255, 0, 180, 158))
+            gradient.setColorAt(0.28, QColor(255, 0, 180, 105))
+            gradient.setColorAt(0.68, QColor(235, 0, 170, 36))
+            gradient.setColorAt(1.0, QColor(235, 0, 170, 0))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(gradient)
-            painter.drawEllipse(QRectF(center.x() - glow_x, center.y() - glow_y, glow_x * 2, glow_y * 2))
+            painter.drawEllipse(QRectF(center.x() - glow_radius, center.y() - glow_radius,
+                                       glow_radius * 2, glow_radius * 2))
 
         for index in valid:
             point = self._map(points[index], rect)
-            is_eye = index in EYE_DOTS
             important = index in EYE_ANCHORS
-            outer_radius = radius * (1.45 if important else 1.15)
-            if is_eye:
-                painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(QColor(255, 50, 160, 120 if important else 62))
-                painter.drawEllipse(point, outer_radius * 1.7, outer_radius * 1.7)
+            if index in EYE_CENTERS:
+                continue
             painter.setBrush(QColor(255, 255, 255, 230 if important else 190))
             painter.setPen(QPen(QColor(255, 255, 255, 125), 0.45))
             dot_radius = radius * (1.18 if important else 0.78)
             painter.drawEllipse(point, dot_radius, dot_radius)
+
+        # Paint the iris cores last so nearby pearl points cannot obscure them.
+        painter.setPen(Qt.PenStyle.NoPen)
+        for index in EYE_CENTERS:
+            if index >= len(points):
+                continue
+            point = self._map(points[index], rect)
+            painter.setBrush(QColor(255, 0, 185, 225))
+            painter.drawEllipse(point, radius * 1.25, radius * 1.25)
+            painter.setBrush(QColor(255, 220, 248, 225))
+            painter.drawEllipse(point, radius * 0.48, radius * 0.48)
 
     def _draw_outline(self, painter: QPainter, points: tuple, rect: QRectF) -> None:
         valid = [index for index in FACE_OVAL if index < len(points)]
