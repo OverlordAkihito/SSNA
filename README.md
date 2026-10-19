@@ -34,6 +34,8 @@ At startup the app scans camera indexes 0 through 7. Choose a camera and press *
 
 The dot filter uses MediaPipe's detected face-mesh landmarks for the face outline, eyebrows, eyelids/eyes, irises, nose and lips. Pearl-white dots sit on individual landmarks; a brighter magenta glow is centered on each detected iris, with pale highlights at the center. The landmarks are painted on a transparent layer over the preview and use the same aspect-fit frame rectangle, so letterboxing and window resizing do not shift the overlay. The selected mirror option is applied to the frame before detection and display.
 
+Turning **Show tracking effect** off hides the overlay but leaves the camera running and plays the supplied “Shet shet nakita ako!” MP3 once for that ON-to-OFF change. Turning it on again is silent. The original audio file is bundled at `assets/audio/shet-shet-nakita-ko-akosidogie-meme-oicwbjyekq0_Jd8GzV3n.mp3`; playback is queued to a reusable background worker, and a missing or unsupported file is logged without interrupting the camera.
+
 ## What “auto-tracking” means here
 
 The app detects face landmarks in the live camera frame and draws smoothed dots or a face outline around each detected face. The tracker follows face shapes between frames; a briefly lost face fades out and can recover on reacquisition. It does not identify a person, assign a name, or build an identity profile. Detection and drawing happen locally while the camera is running. No video recording or snapshot feature is provided.
@@ -59,14 +61,16 @@ The tests exercise synthetic face-track behavior, fake-camera worker processing/
 - `shet_shet/main.py` — application entry point and diagnostics.
 - `shet_shet/ui.py` — desktop interface and user controls.
 - `shet_shet/preview.py` — aspect-fit camera preview and transparent landmark-dot/contour painter.
+- `shet_shet/audio.py` — non-blocking Windows MP3 cue playback and audio resource cleanup.
 - `shet_shet/landmarks.py` — MediaPipe facial region landmark index groups.
 - `shet_shet/camera.py` — camera scanning/capture, worker lifecycle, frame display and contour rendering.
 - `shet_shet/vision.py` — MediaPipe Face Landmarker integration and normalized full-face coordinates.
 - `shet_shet/tracking.py` — dependency-free multi-face association and smoothing.
 - `scripts/download_model.py` — explicit model downloader.
 - `tests/` — automated tracking logic tests.
+- `assets/audio/` — the supplied filter-off MP3 cue.
 - `context/` and `AGENTS.md` — project continuity and coding instructions.
 
 ## Current verification limits
 
-The Codex build environment used to create this project did not enumerate a physical camera. Automated tracking tests and import/syntax checks can be run here; end-to-end camera operation and Windows privacy behavior still need a webcam-equipped manual run. Frame rate depends on the webcam, CPU and lighting; the UI reports the measured processing rate during use.
+The build environment did not enumerate a physical camera or Windows audio endpoint. Automated checks passed and Windows MCI opened the supplied MP3, but end-to-end camera operation, Windows privacy behavior, and audible output still need a manual run on a Windows 11 PC with webcam and sound output. Frame rate depends on the webcam, CPU and lighting; the UI reports the measured processing rate during use.

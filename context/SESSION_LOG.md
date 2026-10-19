@@ -37,3 +37,8 @@ Use a date and short heading. Include outcome, important files/decisions, checks
 
 - Tuned the live dot renderer toward the supplied image: pearl-white landmarks are more legible, and the vivid magenta accent follows detected iris-center landmarks rather than tinting every eye point. Added a synthetic rendered-pixel assertion for the iris glow and updated README/requirements/handoff notes.
 - Latest checks: 12 unit tests, syntax compilation, context synchronization/validation, and diff whitespace check. Real-camera appearance remains unverified because no physical camera was exposed.
+
+## 2026-10-19 — Supplied filter-off MP3
+
+- Copied the user's exact MP3 into `assets/audio/` and confirmed its SHA-256 matches the source file. Connected the existing tracking-effect checkbox after saved settings restore so only genuine ON-to-OFF transitions queue playback; the camera remains active. Added a reusable background MCI player, missing-file diagnostics, and shutdown cleanup without adding a package.
+- 16 tests pass, including toggle sequence, silent startup restoration, missing asset, background worker reuse, and cleanup. Windows MCI opened/closed the supplied MP3 without starting playback. Real audible output and camera operation remain unverified.

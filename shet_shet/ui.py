@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton, QScrollArea, QSlider, QVBoxLayout, QWidget,
 )
 
+from .audio import Mp3CuePlayer
 from .camera import CameraScanner, CameraWorker
 from .preview import CameraPreview
 
@@ -28,6 +29,10 @@ class MainWindow(QMainWindow):
     def __init__(self, project_root: Path):
         super().__init__()
         self.project_root = project_root
+        self.audio_player = Mp3CuePlayer(
+            self.project_root / "assets" / "audio" /
+            "shet-shet-nakita-ko-akosidogie-meme-oicwbjyekq0_Jd8GzV3n.mp3"
+        )
         self.settings = QSettings("ShetShetNakitaAko", "Camera")
         self.worker: CameraWorker | None = None
         self.scanner: CameraScanner | None = None
@@ -42,6 +47,9 @@ class MainWindow(QMainWindow):
         self.resize(1180, 760)
         self._build_ui()
         self._restore_settings()
+        # Restore the saved setting silently; only later user-driven toggles
+        # should trigger the audio cue.
+        self.effect_check.toggled.connect(self._on_effect_toggled)
         self._apply_style()
         QTimer.singleShot(250, self.refresh_cameras)
 
@@ -96,7 +104,6 @@ class MainWindow(QMainWindow):
         controls.addWidget(_label("TRACKING EFFECT", "section"))
         self.effect_check = QCheckBox("Show tracking effect")
         self.effect_check.setChecked(True)
-        self.effect_check.toggled.connect(self._push_options)
         controls.addWidget(self.effect_check)
         controls.addWidget(_label("Filter style", "caption"))
         self.filter_style_combo = QComboBox()
@@ -257,6 +264,11 @@ class MainWindow(QMainWindow):
         if self.worker and self.worker.isRunning():
             self.worker.set_options(self._options())
 
+    def _on_effect_toggled(self, enabled: bool) -> None:
+        self._push_options()
+        if not enabled:
+            self.audio_player.play()
+
     def toggle_camera(self) -> None:
         if self.worker and self.worker.isRunning():
             self.stop_camera()
@@ -357,4 +369,5 @@ class MainWindow(QMainWindow):
         if self.scanner and self.scanner.isRunning():
             self.scanner.wait(2500)
         self._push_options()
+        self.audio_player.close()
         event.accept()

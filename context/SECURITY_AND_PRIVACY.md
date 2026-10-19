@@ -12,6 +12,7 @@ This project is a local webcam preview and facial landmark filter app. It has no
 - Camera frames and facial landmarks are processed in memory on the local machine. Do not upload, record, export, save snapshots, identify people, or derive identity profiles without an explicit scope change.
 - Camera access is initiated by the user pressing Start; no background camera capture is intended.
 - Keep UI preferences distinct from image/landmark data. QSettings preferences are the only intended app persistence.
+- The user-provided MP3 is a bundled local asset. Playback is output-only on a genuine filter ON-to-OFF change; do not record microphone input or add audio capture/upload. Audio device output itself is system-managed.
 - Handle permission denial, camera busy/disconnect, and model errors clearly. Always release the capture device and landmarker when stopping or exiting.
 - Do not write camera frames, facial landmarks, or sensitive content to logs. Current diagnostics record operational messages/errors only by source inspection.
 

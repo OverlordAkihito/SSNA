@@ -69,3 +69,11 @@ This file stores durable decisions, not assumptions disguised as facts. Add an I
 - **Rationale:** This avoids baking display scaling into capture data and keeps overlay positions aligned while the preview resizes or letterboxes.
 - **Consequences:** Apply mirror transformation before both inference and display; test coordinate mapping independently; verify real face alignment on hardware.
 - **Evidence:** `shet_shet/camera.py`, `shet_shet/preview.py`, `tests/test_preview.py`.
+
+### D-010 — Play the short filter cue through Windows MCI
+
+- **Status:** Confirmed implementation decision
+- **Decision:** Use the built-in Windows MCI MP3 device from one reusable background worker for the bundled filter-off cue; add no Python playback dependency.
+- **Rationale:** The app pins PySide6 Essentials without QtMultimedia, and the effect needs only one short local MP3 cue. MCI successfully opened and closed the supplied file in this environment.
+- **Consequences:** Playback calls stay off the UI and camera threads, and the session is stopped/closed on app shutdown. MCI is a legacy Windows API; verify audible output on the target device and revisit the backend if Windows reports compatibility issues.
+- **Evidence:** `shet_shet/audio.py`, `shet_shet/ui.py`, `tests/test_audio.py`, bundled asset at `assets/audio/`.
