@@ -1,49 +1,52 @@
 # Repository Audit
 
-**Audit date:** 2026-10-19  
-**Scope:** The supplied workspace at `C:\Users\Jenren B. Datan\Downloads\SD-Card\DEV\projects\SSNA`.  
-**Result:** This workspace contains the context-keeper kit, not the target application's source. The application audit is therefore **BLOCKED / unable to verify**. No product implementation or behavior was changed.
+**Audit date:** 2026-10-19
 
-## Findings
+**Scope:** Current workspace `C:\Users\Jenren B. Datan\Downloads\SD-Card\DEV\projects\SSNA`.
 
-### Repository contents and tooling
+**Result:** A functional-scope implementation exists for a local Windows webcam face-contour app. Build/headless validation is positive; physical camera behavior is **unable to verify** in this environment.
 
-- The root contains `AGENTS.md`, `FIRST_RUN_PROMPT.txt`, `NEXT_SESSION_PROMPT.txt`, `README.md`, context records, and three Python context-management scripts.
-- The discovered files are limited to those keeper materials. No application source directories, package manifest, dependency lockfile, database/migration files, tests, or build configuration were found.
-- Python is available through the Codex bundled runtime at `C:\Users\Jenren B. Datan\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`. The `python` command itself is not on the PowerShell PATH.
-- Git repository metadata was not established. `git rev-parse --show-toplevel` failed with `fatal: cannot change to 'C:/Users/Jenren B. Datan'`; the workspace listing did not show a `.git` directory. The failure may be due to the configured Git invocation/current directory, so repository history and working-tree state remain unknown.
+## Stack and entry points
 
-### Application architecture and feature state
+- Python 3.12 virtual environment; requirements in `requirements.txt`.
+- PySide6 Essentials desktop UI; app entrypoint `shet_shet/main.py`, launched by `run.bat` or the README command.
+- OpenCV camera enumeration/capture in `shet_shet/camera.py`.
+- MediaPipe Face Landmarker adapter and oval extraction in `shet_shet/vision.py`; synthetic association/smoothing logic in `shet_shet/tracking.py`.
+- Setup model downloader in `scripts/download_model.py`, with pinned URL, SHA-256, size bounds, temporary file, and atomic replacement.
+- UI tracker tests in `tests/test_tracking.py`.
 
-No application entry point, client/server code, persistence, database, authentication, authorization, hosting, or provider configuration was present to inspect. The application stack and every product feature remain **Unable to verify**. This is not evidence that the features are absent from the actual application; the application root was not supplied in this workspace.
+## Data and trust boundaries
 
-The product requirement register in `context/REQUIREMENTS.md` remains a goals list, not an implementation inventory. Do not mark any app feature as implemented based on this audit.
+All camera capture, inference and rendering are intended to occur in the local desktop process. Frames and landmarks are transient; QSettings stores the UI options. No application server, database, identity/account system, recording/export path, or cloud integration was found. Model acquisition uses explicit HTTPS download only when the setup script is invoked. Runtime logs are configured under `%LOCALAPPDATA%\ShetShetNakitaAko\logs`; source inspection shows no frame writes.
 
-### Security and reliability risks
+## Source evidence and current gaps
 
-No code-level security assessment was possible. The following are **unknown, not confirmed defects**:
-
-| Severity | Risk / gap | Evidence and disposition |
+| Area | Evidence | Finding |
 |---|---|---|
-| High | Authentication, session handling, and trusted authorization cannot be assessed. | No application source or service configuration in the discovered workspace. Audit the actual app before any release decision. |
-| High | User-data isolation, privacy, deletion, and backup controls cannot be assessed. | No data model, database, API, or storage configuration found. |
-| Medium | Test/build/lint coverage and runtime reliability cannot be assessed. | No app manifest or test/build configuration found. |
-| Low | Git history and change provenance are unavailable in this workspace. | Git command failed and `.git` was not listed; validate Git setup after opening the application root. |
+| UI and camera controls | `shet_shet/ui.py` | Start/stop, camera selection/refresh, preview, effect/mirror/colour/thickness/smoothing controls, status and FPS/face count exist. |
+| Capture lifecycle | `shet_shet/camera.py` | Camera scanner and worker run off the UI thread; worker releases capture and landmarker in `finally`. Physical driver lifecycle not exercised. |
+| Face contour | `shet_shet/vision.py`, `tracking.py`, `camera.py` | Up to four face landmarks, oval contour, matching/smoothing and overlay are implemented. Accuracy on real faces is unverified. |
+| Model acquisition | `scripts/download_model.py`, `requirements.txt` | Download is explicit and verifies expected SHA-256. Checked local model hash matched pin. |
+| Tests | `tests/test_tracking.py`, `tests/test_camera.py` | Seven tests cover synthetic tracker behavior and fake-camera worker frame/cleanup/error paths; no physical capture or real-face accuracy assertion. |
+| Privacy | `shet_shet/ui.py`, `camera.py`, `main.py`, `vision.py` | No app-level upload/recording/persistence for frames found by source inspection. Limited MediaPipe 0.10.21 blank-frame smoke emitted no Clearcut text; comprehensive dependency network audit not performed. |
 
-## Checks and commands
+## Validation observed 2026-10-19
 
-| Check | Result | Evidence / limitation |
-|---|---|---|
-| `python scripts/context_sync.py` | PASS | Ran with the bundled Python executable; refreshed `context/AUTO_STATE.md`. Git metadata probes emitted a fatal current-directory message, so no Git state is established. |
-| `python scripts/context_validate.py` | PASS | Bundled Python reported `CONTEXT VALIDATION PASS: 18 required files and key sections found.` This validates keeper structure only, not application claims. |
-| Application tests, lint, type checks, build, or runtime smoke checks | NOT RUN | No application source, dependency manifest, or commands exist in the supplied workspace. |
+- `\.venv\Scripts\python.exe -m unittest discover -s tests -v` — PASS, seven tests including fake-camera worker lifecycle/error paths.
+- `\.venv\Scripts\python.exe -m compileall -q shet_shet scripts\download_model.py tests` — PASS.
+- `\.venv\Scripts\python.exe -m pip check` — PASS, no broken requirements.
+- `Get-FileHash models\face_landmarker.task -Algorithm SHA256` — PASS, equals downloader pin.
+- Offscreen `MainWindow` construction and MediaPipe blank-frame inference — PASS; zero faces returned as expected.
+- `Get-PnpDevice -Class Camera -ErrorAction SilentlyContinue` — no devices returned; actual camera discovery/opening, permission behavior, live contours, disconnect and shutdown remain NOT RUN / unable to verify.
+- Keeper context sync and structural validation — PASS; latest result is recorded in `WORK_STATE.md`.
 
-## Configuration and unresolved unknowns
+## Security and reliability risks (gaps, not confirmed defects)
 
-The app's languages/framework, entry points, data store, identity provider, roles, hosting, external services, environment variable names, test commands, and deployed state are all unknown. No credentials or environment values were inspected or copied.
+- Actual camera access and OS camera privacy interaction need a webcam-equipped Windows 11 check.
+- Face contour fidelity and performance under varied faces/lighting/movement are unmeasured.
+- No comprehensive third-party dependency network-behavior audit was performed. Reassess privacy/network behavior on dependency upgrades.
+- No installer, code signing, deployment, or release packaging is present or verified.
 
-## Recommendations
+## Best next action
 
-1. Open or provide the actual application repository root and merge this keeper without overwriting existing project knowledge.
-2. Rerun the read-first audit there, following `FIRST_RUN_PROMPT.txt`, and trace actual flows before assigning feature statuses.
-3. Only after that audit, make architecture decisions and a dependency-aware roadmap. No feature implementation was authorized for this initialization task.
+Run the setup/run flow from `README.md` on Windows 11 with a working webcam; validate discovery, preview, contour controls, stop/restart, device disconnect, and clean shutdown, then update requirement status from direct observation.

@@ -2,34 +2,30 @@
 
 ## Purpose
 
-Build and maintain a multi-user social/community application with user profiles and relationships, messaging, account administration, moderation, privacy controls, subscription-state visibility, and robust data recovery.
+Build a Windows desktop app named **SHET SHET NAKITA AKO** that previews a webcam feed and overlays a smooth face contour. The current implementation processes frames on the local PC and has no recording, snapshot, identity recognition, upload, analytics, or telemetry feature in app code.
 
-## Intended user experiences
+## Intended user experience
 
-- **Client/user experience:** register or sign in, manage a profile, discover users through a stable public-facing ID/search, interact through connections/likes, use the in-scope chat modes, control profile/location/privacy visibility, use a QR profile link, and manage eligible data/deletion preferences.
-- **Admin/moderation experience:** authorized account management, report review, moderation actions, appropriate subscription-state visibility, auditable privileged operations, and supported backup/recovery workflows.
-- **Owner/developer experience:** reliable setup, tests, explicit configuration requirements, documented architecture, safe migrations, practical handoff, and clear release gates.
+- Select or refresh the available camera list, start/stop preview, and see useful setup or device errors.
+- See a face outline with configurable colour, thickness, mirror mode, and smoothing.
+- Use the app with more than one face in view when MediaPipe detects them.
+- Keep face frames and landmarks transient in memory; persist only UI preferences.
 
-These are goals, not a confirmation that any screen, API, data model, or secure workflow exists.
-
-## Historical project description
-
-The development guide says the app had been described as built with HTML and JavaScript. It explicitly warns the coding agent not to assume that this description fully represents the current repository. Verify the actual stack from repository files.
+These are product goals. Refer to `REQUIREMENTS.md` and inspect implementation and checks for each feature's current status.
 
 ## Product principles
 
-1. Multi-user isolation and trusted authorization must be real; hiding a control in the browser is not security.
-2. Keep the smallest coherent architecture capable of the required features; preserve working behavior and avoid duplicate systems.
-3. Privacy is a product behavior: public/private settings and consent must affect actual data returned and actions allowed.
-4. Security-sensitive capabilities require evidence-based validation, not UI-only completion claims.
-5. Unconfigured provider integrations must be labeled unconfigured; do not fabricate connectivity or successful payments/backups.
-6. Feature implementation should follow prerequisites and the real repository's state, not a blind checklist.
-7. Each meaningful task should leave enough accurate context for a new AI session to continue safely.
+1. Camera video and landmark processing stay on the device; do not add upload, recording, telemetry, analytics, or identity recognition without an explicit scope change.
+2. Camera and model resources must be released on stop, failure, and application close.
+3. Communicate camera/model errors honestly and provide actionable setup steps.
+4. Keep model acquisition explicit and integrity-checked rather than silently downloading it at launch.
+5. Distinguish automated logic checks from real camera/manual validation.
+6. Keep handoff/context records consistent with source and current validation evidence.
 
-## Out of scope unless explicitly added
+## Out of scope
 
-Do not silently select payment, hosting, identity, database, realtime chat, or external backup providers. Do not infer business rules—such as whether “add people” means follow, friend, or request—from vague labels; find existing requirements or document the chosen, justified model.
+No account system, network service, database, social features, recording/export, face identification, cloud processing, or installer/release packaging is in scope unless the user explicitly changes the product request.
 
 ## Evidence status
 
-At keeper creation, no application source repository was supplied. The actual implementation, stack, and feature status remain unknown until the first-run audit.
+The current implementation is a local Python/PySide6 desktop app under `shet_shet/`. Architecture and check evidence are recorded in `ARCHITECTURE.md`, `REQUIREMENTS.md`, `WORK_STATE.md`, and `docs/REPOSITORY_AUDIT.md`. Actual webcam behavior remains unverified in this environment because no camera device was enumerated.

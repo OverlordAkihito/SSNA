@@ -1,38 +1,27 @@
 # Requirements Register
 
-**Interpretation rule:** The entries below are product requirements/goals compiled from the supplied development guide. Until the real repository is audited and each relevant flow is traced, **current implementation status is Unknown / not yet audited**. Do not promote a feature to implemented based only on a label, screen, button, local-storage entry, or mock response.
+**Evidence boundary:** The rows below describe the requested camera app and current source-backed status. Statuses are based on source inspection plus the listed focused checks; they do not imply successful real-camera operation.
 
 ## Status vocabulary
 
-Use `Verified`, `Partial`, `UI-only`, `Missing`, `Unable to verify`, `Blocked`, or `Not applicable`. Every status change should include evidence (paths/symbols, tests, or observed behavior) and material gaps.
+Use `Verified`, `Partial`, `UI-only`, `Missing`, `Unable to verify`, `Blocked`, or `Not applicable`. Every status has evidence and material gaps.
 
-| ID | Requirement area | Expected behavior / acceptance summary | Initial status |
+| ID | Requirement area | Expected behavior / acceptance summary | Current status and evidence |
 |---|---|---|---|
-| REQ-01 | Identity and sessions | Google sign-in where selected/configured; trusted identity validation; secure sign-in/out, expiry, refresh/revocation and recovery; no client-supplied identity trusted as proof. | Unable to verify — repository audit required |
-| REQ-02 | Multi-user data isolation | Users can access only authorized records; ownership enforced at a trusted service/backend boundary for private profiles, settings, chats, reports, backups and other sensitive data. | Unable to verify — repository audit required |
-| REQ-03 | Roles and account protection | User/admin/moderator/owner roles only where needed; server-side permissions; rate limits and proportionate lockout; account recovery; no password visibility to admins. | Unable to verify — repository audit required |
-| REQ-04 | Account management | Authorized listing/search, account state management, permitted profile editing, deactivation/suspension/deletion behavior, timed bans and audit events. | Unable to verify — repository audit required |
-| REQ-05 | Public user ID and people search | Stable, unique public-facing ID; copy action; normalized/validated search; privacy-limited results and abuse protection. | Unable to verify — repository audit required |
-| REQ-06 | User profiles | Authorized editing of approved public fields; privacy rules applied to profile reads; cannot edit another user's profile. | Unable to verify — repository audit required |
-| REQ-07 | Profile photo tools | Upload, crop/reposition, rotate, save and delete; safe type/size validation; preview matches saved circular avatar; errors/cancel are handled. | Unable to verify — repository audit required |
-| REQ-08 | Social interactions | Add/connect, view profile, like/unlike, and message entry points where in scope; clear relationship semantics; no self-add/self-like, duplicates, or unauthorized edits. | Unable to verify — repository audit required |
-| REQ-09 | QR profile links | Stable public profile URL/identifier, correct destination, no secrets in QR; private/suspended/deleted account behavior obeys access rules. | Unable to verify — repository audit required |
-| REQ-10 | Chat modes | Implement only required/supported announcements, global chat, nearby chat, and direct messages; bound/paginated history, trusted sender identity, per-room/conversation authorization and abuse controls. | Unable to verify — repository audit required |
-| REQ-11 | Location privacy / nearby chat | Explicit opt-in and clear disclosure; public/private preference affects server results; minimum necessary precision/retention; permission denied/revoked/stale cases handled; no covert tracking. | Unable to verify — repository audit required |
-| REQ-12 | Reports and moderation | Report reasons/status transitions, private reviewer notes, reviewer permissions, spam/duplicate protection, traceable moderation actions and audit history. | Unable to verify — repository audit required |
-| REQ-13 | Navigation and collapsible cards | Supported navigation placement/layout configuration and accessible, keyboard-operable, responsive collapsible areas. | Unable to verify — repository audit required |
-| REQ-14 | Deletion, trash and restore | Clear choice/semantics for cancel, trash, restore and permanent deletion; ownership/authorization; confirmation; recovery policy and dependent-data handling. | Unable to verify — repository audit required |
-| REQ-15 | Subscription-state visibility | Clear state model for free/paid/past-due/cancelled/expired/pending where needed; state source, timestamps and entitlements are trusted and auditable. | Unable to verify — repository audit required |
-| REQ-16 | Payment provider | Optional. Integrate only after a provider is chosen and configured; no silent provider choice, payment-secret storage, or browser-only entitlement grants. | Optional; configuration/provider unknown |
-| REQ-17 | Backup and recovery | Define backup scope/retention/access control/versioning; per-user and/or system recovery as appropriate; validate restore, protect current data, authorize/audit privileged recovery, and report provider success only after confirmation. | Unable to verify — repository audit required |
-| REQ-18 | Reliability and UX states | Important flows handle loading, empty, success, invalid input, permission denial, network failure, server errors, concurrency/repeat submissions, large lists/history and accessibility. | Unable to verify — repository audit required |
-| REQ-19 | Testing and release | Reproducible focused tests plus relevant lint/type/build/security checks; truthful PASS/FAIL/NOT RUN reporting; documented gaps and release blockers. | Unable to verify — repository audit required |
-| REQ-20 | Setup and deployment | Commands/configuration documented from actual files; environment examples contain placeholders only; migration/backup/rollback limitations are explicit; deployment is not implied without execution/evidence. | Unable to verify — repository audit required |
-| REQ-21 | Navigation/context continuity | Each meaningful work session updates relevant context, current work state, handoff, and generated repository snapshot so the next agent can recover reliably. | Keeper workflow provided; adoption/use must be verified in the target repository |
+| CAM-01 | Windows desktop UI | Launch a Windows desktop window with camera preview and controls. | Partial — PySide6 UI exists in `shet_shet/ui.py`; offscreen construction smoke check passed, but no native Windows interaction review was done. |
+| CAM-02 | Camera discovery and selection | Scan available cameras, select one, refresh after device changes, handle no camera and open failure. | Partial — `CameraScanner` scans indexes 0–7 and `CameraWorker` reports open/read errors in `shet_shet/camera.py`; this environment enumerated no camera, so device behavior is unverified. |
+| CAM-03 | Live preview lifecycle | Start and stop camera, show live frames, release camera/model resources on stop, failure, and close. | Partial — worker tests in `tests/test_camera.py` pass with a fake camera: frame data is surfaced and camera/model resources close after stop; open failure releases capture. Real device/driver behavior is still unverified. |
+| CAM-04 | Face contours | Detect multiple face landmark sets and overlay a smoothed face oval. | Partial — MediaPipe task integration and four-face setting in `shet_shet/vision.py`; tracker/rendering in `shet_shet/tracking.py` and `camera.py`; 5 synthetic tracker tests pass, actual face-camera inference unverified. |
+| CAM-05 | User controls and preferences | Configure mirror, effect, outline colour, thickness, and smoothing; persist preferences. | Partial — controls and QSettings persistence implemented in `shet_shet/ui.py`; offscreen control construction checked, interactive persistence not manually exercised. |
+| CAM-06 | Local-only processing and minimization | Do not identify, record, save or upload frames/landmarks; keep processing local and avoid telemetry. | Partial — app flow has no network/recording path and only saves UI preferences; model is acquired by explicit script. MediaPipe 0.10.21 local smoke test emitted no Clearcut upload text; this does not prove every dependency is free of all network behavior. |
+| CAM-07 | Setup and model integrity | Document setup; download model only on explicit request and verify before install. | Verified — `README.md`, `requirements.txt`, `scripts/download_model.py`; checked included model SHA-256 equals the script pin. |
+| CAM-08 | Error states and diagnostics | Show useful setup/device failures and log diagnostics without frames. | Partial — fake-camera open-failure test verifies an actionable worker failure and capture release; visible UI presentation and physical permission errors remain unverified. |
+| CAM-09 | Automated validation | Focused tests and syntax/dependency checks. | Verified for tested scope — 7 `unittest` checks, `compileall`, `pip check`, MediaPipe blank-frame task smoke, and offscreen UI smoke passed; these do not establish real webcam behavior. |
+| CAM-10 | Real-device validation | Verify on a Windows 11 machine with a working camera and face in view. | Blocked — no camera device was enumerated in this environment. The owner should run the documented app manually with a webcam. |
+| KEEPER-01 | Context continuity | Keep current work, handoff, architecture, privacy and generated state aligned with app source. | Verified structurally after this session's updates — see `scripts/context_validate.py`; it does not validate app behavior. |
 
 ## Requirements change policy
 
-- Preserve the user's intended behavior; clarify only when a decision materially affects safety, data semantics, provider selection, or irreversible consequences.
-- If a requirement conflicts with current implementation, record the conflict and recommend a migration path; do not silently redefine either side.
-- When a feature is complete, cite evidence and tests, note limits, and update both the status here and the relevant architecture/security docs.
-- Features may be deferred or ruled out only with an explicit rationale. Do not run every prompt in a prompt library blindly.
+- Product goals are not proof of implementation. Keep statuses tied to inspected files and checks.
+- Record camera, model, permission, and processing limitations directly; do not claim a real-device pass without observing one.
+- Changes to capture, networking, storage, identity, or telemetry require explicit scope and corresponding privacy review.

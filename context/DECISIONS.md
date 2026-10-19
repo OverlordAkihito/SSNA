@@ -46,4 +46,18 @@ This file stores durable decisions, not assumptions disguised as facts. Add an I
 
 ## App-specific technical decisions
 
-No concrete stack/provider/schema/hosting/payment/realtime/storage decision has been confirmed in the keeper source materials. Add decisions here only after repository evidence or an explicit owner decision exists. Link detailed architecture proposals to `docs/ARCHITECTURE_DECISIONS.md` when created.
+### D-007 — Local-only webcam processing
+
+- **Status:** Confirmed product constraint
+- **Decision:** Process camera frames and face landmarks locally; provide no recording, snapshot, upload, telemetry, analytics, or identity-recognition feature.
+- **Rationale:** This was an explicit requirement in the user-supplied app prompt and limits sensitive face data to transient local processing.
+- **Consequences:** Review future dependency and data-flow changes for network or persistence behavior. Source inspection and a limited pinned-version smoke check are evidence, not a formal guarantee about every dependency.
+- **Evidence:** `shet_shet/camera.py`, `shet_shet/vision.py`, `shet_shet/ui.py`, `context/USER_PROVIDED_PROMPTS.md`.
+
+### D-008 — Explicit verified model installation
+
+- **Status:** Confirmed implementation decision
+- **Decision:** Download the MediaPipe model only when the owner runs the setup script; verify SHA-256 and size before atomically installing it.
+- **Rationale:** Prevents silent startup networking and rejects an unexpected or changed model artifact.
+- **Consequences:** First-time setup requires the explicit model command and network access; app startup reports the missing model with the setup command.
+- **Evidence:** `scripts/download_model.py`, `shet_shet/vision.py`, `README.md`.

@@ -1,87 +1,68 @@
-# Context Keeper Kit for Codex and Other Coding AIs
+# SHET SHET NAKITA AKO
 
-**Version:** 1.0.0  
-**Purpose:** Preserve accurate project context across AI sessions, make meaningful changes traceable, and help the next agent resume from repository evidence instead of chat-memory guesses.
+A small Windows desktop camera app that draws a smoothed facial contour around faces visible to your webcam. Camera frames and face landmarks are processed on this PC. The app does not identify people, record video, save snapshots, or send frames to a server.
 
-## What is included
+## Requirements
 
-- `AGENTS.md` — canonical project instructions for coding agents.
-- `context/SESSION_HANDOFF.md` — the next-session starting point.
-- `context/PROJECT_OVERVIEW.md` — product purpose and boundaries.
-- `context/REQUIREMENTS.md` — feature goals, acceptance expectations, and evidence-based status fields.
-- `context/ARCHITECTURE.md` — actual architecture facts separated from open choices and principles.
-- `context/WORK_STATE.md` — active work, blockers, and verified checks.
-- `context/DECISIONS.md` — durable decisions and the reasons behind them.
-- `context/SECURITY_AND_PRIVACY.md` — security/privacy invariants for this multi-user app.
-- `context/SESSION_LOG.md` — concise, meaningful session history.
-- `context/AUTO_STATE.md` — generated repository snapshot, refreshed by a script.
-- `context/CONTEXT_INDEX.md` — tells the agent which context file to use and when to update it.
-- `context/PROMPT_COMPLETENESS.md` — a reusable prompt/task completeness checklist based on RTCCO and explicit acceptance criteria.
-- `context/DEVELOPMENT_SEQUENCE.md` — development order and app-specific release checks from the supplied development guide.
-- `scripts/context_sync.py` — refreshes the machine-generated repository state without reading source-file contents.
-- `scripts/context_watch.py` — optional foreground watcher that refreshes the machine snapshot while repository metadata changes.
-- `scripts/context_validate.py` — validates the presence and basic integrity of the keeper files.
-- `FIRST_RUN_PROMPT.txt` — audit-only bootstrap instruction.
-- `NEXT_SESSION_PROMPT.txt` — reusable template for ordinary work.
+- Windows 11, 64-bit.
+- Python 3.12 (64-bit CPython recommended; required by the pinned MediaPipe wheel).
+- A webcam that Windows can access.
+- Internet access for installing dependencies and the one-time MediaPipe task model download.
 
 ## Install it safely
 
-1. Extract this kit.
-2. Open the **actual application repository root** in Codex or your coding assistant. Do not use the extracted kit folder as a substitute for the application.
-3. Copy `AGENTS.md`, `context/`, and `scripts/` into the application root. Copy the prompts and README if useful.
-4. **Merge; do not blindly overwrite.** If the repository already has `AGENTS.md` or context files, compare them and preserve valid existing constraints and decisions. Resolve conflicts explicitly rather than silently deleting established project knowledge.
-5. Run the first-run prompt in `FIRST_RUN_PROMPT.txt`. The first task is repository discovery and documentation, not feature implementation.
-6. Keep the kit files under version control alongside the project when appropriate. Do not place credentials, tokens, production data, or private user records in them.
+Open this folder in VS Code or PowerShell, then run:
 
-## Use it in each session
-
-At session start, the agent should read `AGENTS.md`, `context/SESSION_HANDOFF.md`, `context/WORK_STATE.md`, `context/PROJECT_OVERVIEW.md`, and the relevant requirements/security/architecture notes. It should run:
-
-```bash
-python scripts/context_sync.py
-python scripts/context_sync.py --check
-python scripts/context_validate.py
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe scripts\download_model.py
 ```
 
-For continuous machine-snapshot refresh while actively coding, you can optionally keep a terminal running:
+The model script downloads the MediaPipe Face Landmarker task file from Google's official MediaPipe model storage into `models/face_landmarker.task`. It runs only when you call it. The model is not silently fetched at application startup.
 
-```bash
-python scripts/context_watch.py
+## Run
+
+```powershell
+.\.venv\Scripts\python.exe -m shet_shet.main
 ```
 
-Stop it with `Ctrl+C`. It is a foreground polling process, not an installed OS service; no background process is assumed to persist across sessions.
+Or double-click `run.bat` after setup.
 
-Then it should inspect the actual code relevant to the task. Do not re-audit the entire application for every small bug once a reliable audit exists; expand inspection when dependencies or risk require it.
-
-Before handing off, the agent must refresh the generated snapshot, update the semantic context files affected by the change, update `WORK_STATE.md` and `SESSION_HANDOFF.md`, and append a concise entry to `SESSION_LOG.md` for meaningful work. Re-run validation afterward.
+At startup the app scans camera indexes 0 through 7. Choose a camera and press **Start camera**. Use **Refresh** after plugging in a device. Choose a contour colour, line width, smoothing, mirroring, or turn the contour effect off from the right-hand controls. Preferences are stored with Windows QSettings; camera frames and landmarks are not saved.
 
 ## What “auto-tracking” means here
 
-The sync script automatically captures repository metadata when run: Git branch/commit, working-tree changes, recent commit subjects, top-level structure, and common tooling/configuration **signals**. Use `--check` to determine whether the saved snapshot is stale. The agent runs it at session start and before handoff. For live refresh during a coding period, `scripts/context_watch.py` optionally polls for changes and refreshes the machine snapshot.
+The app detects face landmarks in the live camera frame and draws a smoothed outline around each detected face. The tracker follows face shapes between frames; it does not identify a person, assign a name, or build an identity profile. Detection and drawing happen locally while the camera is running. No video recording or snapshot feature is provided.
 
-The watcher is an optional foreground process and must be explicitly started; no OS-level background service is installed or assumed to persist across sessions. Both tools track repository metadata, not whether a feature is functionally correct. Semantic memory—why a change was made, requirements status, architecture decisions, risks, and next steps—must still be updated by the agent from evidence. A file watcher cannot understand code behavior.
+## Test
 
-## First-run limitation
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
 
-This package was built from the provided prompt-completeness instructions, development guide, and prior context-keeper note. No application source repository was included with those materials. Accordingly, the included feature list is a **product brief**, not a claim about what the application currently implements. The first-run audit must establish that from the real repository.
+The tests exercise synthetic face-track behavior and worker processing/cleanup using a fake camera. They do not prove physical webcam access, OS privacy behavior, or real-world face tracking quality.
 
-## Suggested workflow
+## Troubleshooting
 
-- First setup: audit → architecture decision → dependency-aware roadmap.
-- Feature implementation: use a focused task prompt with explicit acceptance criteria; inspect current code first.
-- Release: use the release/security checklist in `context/DEVELOPMENT_SEQUENCE.md` and verify the actual test/build results.
-- After major changes: reconcile the roadmap and context files against code and tests.
+- **No camera detected:** connect or enable a webcam, press Refresh, and check Windows Settings → Privacy & security → Camera. Close apps that may already hold the camera.
+- **Camera opens then stops:** reconnect it and retry. The app logs diagnostics under `%LOCALAPPDATA%\ShetShetNakitaAko\logs\app.log` without recording camera frames.
+- **Missing model:** run the model download command above. The app will show this exact setup action rather than fetching files automatically.
+- **Dependency install fails:** use 64-bit Python 3.12, recreate `.venv`, and reinstall with the command above. The pinned MediaPipe Tasks API is used for the landmark contour.
+- **Camera is busy:** close conferencing or camera apps and restart this app.
 
-## Status vocabulary
+## Project structure
 
-Use these consistently:
+- `shet_shet/main.py` — application entry point and diagnostics.
+- `shet_shet/ui.py` — desktop interface and user controls.
+- `shet_shet/camera.py` — camera scanning/capture, worker lifecycle, frame display and contour rendering.
+- `shet_shet/vision.py` — MediaPipe Face Landmarker integration and face-oval points.
+- `shet_shet/tracking.py` — dependency-free multi-face association and smoothing.
+- `scripts/download_model.py` — explicit model downloader.
+- `tests/` — automated tracking logic tests.
+- `context/` and `AGENTS.md` — project continuity and coding instructions.
 
-- **Verified / Implemented:** traced to the relevant implementation and corroborated by suitable checks where feasible.
-- **Partial:** some path exists, but one or more important requirements are missing or unverified.
-- **UI-only:** visible controls/screens exist, but the complete underlying behavior is not established.
-- **Missing:** repository inspection supports that the capability is absent.
-- **Unable to verify / Unknown:** evidence or access is insufficient.
-- **Blocked:** a specific dependency, credential, owner decision, or permission prevents completion.
-- **Not applicable:** deliberately out of scope, with rationale recorded.
+## Current verification limits
 
-A label or button is never enough by itself to mark a feature implemented.
+The Codex build environment used to create this project did not enumerate a physical camera. Automated tracking tests and import/syntax checks can be run here; end-to-end camera operation and Windows privacy behavior still need a webcam-equipped manual run. Frame rate depends on the webcam, CPU and lighting; the UI reports the measured processing rate during use.

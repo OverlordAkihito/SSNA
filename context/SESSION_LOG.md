@@ -14,9 +14,15 @@ Keep this log concise: meaningful changes, durable decisions, important discover
 
 Use a date and short heading. Include outcome, important files/decisions, checks actually run and their result, and remaining blockers only when useful for future work.
 
-## 2026-10-19 — Keeper initialized; app source not supplied
+## 2026-10-19 — Camera worker tests
 
-- Audited the supplied workspace and confirmed it contains the context-keeper kit, not application source. Created `docs/REPOSITORY_AUDIT.md`; application features and architecture remain unable to verify.
-- Preserved the complete text of the three user-provided DOCX prompts in `context/USER_PROVIDED_PROMPTS.md`; retained `FIRST_RUN_PROMPT.txt` as the general audit bootstrap.
-- Bundled Python `scripts/context_sync.py` completed; Git metadata probes failed because no usable Git root was established. Bundled Python `scripts/context_validate.py` passed (18 required files/key sections). Application checks were not run because no application source/configuration is present.
-- No product behavior was built or changed. Next action: provide/open the actual app repository root and conduct its first-run audit.
+- Added `tests/test_camera.py` with deterministic fake-camera checks for latest-frame/face-count delivery, worker stop cleanup, and camera-open failure reporting/resource release.
+- Updated README, requirements, architecture, and repository audit to distinguish fake-camera coverage from actual webcam validation.
+- `unittest` now passes 7 tests; `compileall`, `pip check`, and `git diff --check` passed. Physical webcam behavior remains unverified because no camera is available in the environment.
+
+## 2026-10-19 — Camera app build continued; stale context corrected
+
+- Inspected the existing `shet_shet/` implementation and confirmed it is a local PySide6/OpenCV/MediaPipe Windows webcam face-contour app with explicit model download and synthetic tracker tests.
+- Updated README headings/definition to satisfy keeper validation and document what tracking means. Replaced stale social-app/keeper-only overview, requirements, architecture, and security context with the actual camera app scope; added local-only/model-install decisions and updated work state and handoff.
+- Checks: 5 tracker tests PASS; `compileall` PASS; `pip check` PASS; pinned model SHA-256 PASS; offscreen UI and MediaPipe blank-frame smoke PASS. Windows camera device query returned no devices, so real webcam/camera permission behavior remains unverified.
+- Next: run on a Windows 11 computer with webcam and validate the actual capture/contour lifecycle, then update statuses from observed behavior.

@@ -1,44 +1,26 @@
 # Security and Privacy Context
 
-This document states non-negotiable design constraints for the intended multi-user application. It does not claim that the current code already satisfies them.
+This project is a local webcam preview and face-contour app. It has no user identity, account system, backend, or authorization roles. The context keeper originally carried social-app security requirements; those were not applicable to this app and are superseded here.
 
 ## Identity and authorization
 
-- Establish user identity through the configured trusted authentication flow; never accept a client-supplied email, user ID, role, provider profile object, or public identifier as proof of identity.
-- Keep private provider credentials and privileged keys out of browser code, committed files, logs, prompts, and context documents.
-- Enforce access control at trusted backend/service boundaries for every sensitive operation; hiding a button is only a UI convenience.
-- Test unauthorized/direct-call cases for admin, moderator, account management, private data, messaging, reports and backups.
-- Do not allow editable cosmetic tags (`owner`, `admin`, `paid`, etc.) to grant real permissions.
-- Never display or retrieve an existing password for an admin. Use reset/invitation/recovery workflows.
+- Not applicable to current scope: no identity, server, private multi-user records, or privileged account operations were found.
+- Do not add account identity or access-controlled remote features without an explicit product decision and an appropriate trusted boundary.
 
-## Data isolation and minimization
+## Camera and face-data handling
 
-- Every user-owned record needs a clear owner and access rule. Prevent one user from reading or modifying another user's private records.
-- Search and public IDs should expose only approved public data and should resist enumeration where appropriate.
-- Keep only data needed for a feature. Protect messages, reports, backups, tokens and account data. Avoid placing real records in test fixtures or memory files.
-- Document deletion semantics, retention, cascades, restore effects and recovery constraints. Soft deletion, trashing and permanent deletion are distinct states.
+- Camera frames and facial landmarks are processed in memory on the local machine. Do not upload, record, export, save snapshots, identify people, or derive identity profiles without an explicit scope change.
+- Camera access is initiated by the user pressing Start; no background camera capture is intended.
+- Keep UI preferences distinct from image/landmark data. QSettings preferences are the only intended app persistence.
+- Handle permission denial, camera busy/disconnect, and model errors clearly. Always release the capture device and landmarker when stopping or exiting.
+- Do not write camera frames, facial landmarks, or sensitive content to logs. Current diagnostics record operational messages/errors only by source inspection.
 
-## Location and profile privacy
+## Dependency and model acquisition
 
-- Location/nearby features are opt-in and explain what is shared.
-- Private settings or missing/revoked permission must affect backend eligibility/results, not just hide information in the UI.
-- Use the least precise, shortest-lived location representation that satisfies the purpose. Do not add covert/background location tracking or log raw precise coordinates without a clear need.
-- Profile QR codes encode a stable public route/identifier, never session tokens, passwords, private database keys or unnecessary sensitive information.
-
-## Moderation, account protection and abuse controls
-
-- Validate permissions and audit high-impact admin/moderation actions without logging secrets or unnecessary private content.
-- Protect report review notes and evidence from reporters and unauthorized users.
-- Prevent duplicate/spam submissions and rate-limit automated search/auth abuse where appropriate.
-- Account lockout/rate limiting must not become an easy denial-of-service vector against an innocent account; recovery must remain possible.
-
-## Subscription and backup controls
-
-- Subscription status is separate from role/tag labels. Trusted records/webhooks/configured provider confirmation—not a browser flag—must determine paid entitlements.
-- Do not store card numbers or payment secrets in the app.
-- Protect backups separately from the regular user session where appropriate. Authorize/audit restores, validate data and version, make a recovery point before destructive replacement, and do not report provider success before confirmation.
-- Never silently overwrite production data from an unverified backup.
+- Dependency installation and model download are explicit setup actions. The model downloader uses HTTPS, a size bound, and SHA-256 verification before replacing the target file.
+- The current MediaPipe version was pinned after a local smoke test of 0.10.21 produced no Clearcut upload text; this observation is limited and is not proof of absence of all network activity in every dependency/runtime condition.
+- Review dependency changes for privacy effects before updating versions or adding packages.
 
 ## Implementation and evidence checklist
 
-For relevant changes, establish: trust boundary; owner/role rule; validation; permitted and denied paths; privacy effect; logs/audit trail; recovery/rollback; test evidence; and any configuration/owner action still needed. If any element cannot be verified, report it as a gap rather than a pass.
+For capture or model changes, inspect data flow, persistence, network use, cleanup on stop/failure/exit, errors, and focused tests. Mark real webcam behavior unverified until tested on a device. Never convert an offscreen UI smoke test or synthetic tracker test into a claim of camera correctness.

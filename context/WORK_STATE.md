@@ -1,30 +1,37 @@
 # Work State
 
-**Current state (2026-10-19):** Keeper initialization completed for the supplied workspace. It contains the context-keeper kit and the preserved user-provided prompts, but no application source. The application baseline remains unaudited because its root is not present here.
+**Current state (2026-10-19):** Local Windows camera app implemented; build-level checks pass. Real webcam operation remains unverified because Windows returned no camera devices.
 
-**Current milestone:** Keeper initialized; application audit awaits the actual app repository.
+**Current milestone:** Add hardware-independent coverage for the camera worker; real webcam validation remains outstanding.
 
 ## Active work
 
-- [x] Audit the supplied workspace boundary and document that it contains the keeper, not application source.
-- [x] Preserve the three user-supplied DOCX prompt bodies in `context/USER_PROVIDED_PROMPTS.md` for exact future reference.
-- [ ] Open/merge this keeper into the actual application repository root and conduct its source-backed audit.
-- [ ] Establish app feature states and architecture only after inspecting the actual app.
-- [ ] Create architecture decisions and a dependency-aware roadmap after the app audit.
+- [x] Implement PySide6 camera UI, OpenCV capture worker, MediaPipe face contour, smoothing, control preferences, explicit model download, setup docs, and focused tracker tests.
+- [x] Reconcile stale keeper-only context and audit notes with the actual application files.
+- [x] Confirm the model file matches the pinned downloader SHA-256.
+- [x] Add fake-camera tests for latest-frame processing, face count, stop cleanup, and camera-open failure cleanup.
+- [ ] Run the app on Windows 11 with an accessible webcam and a face in view; verify selection, start/stop, contour controls, disconnect/error, and clean shutdown.
+- [ ] After hardware validation, record measured behavior and any fixes here and in requirements/session log.
 
-## Last verified checks
+## Checks run this continuation
 
-- `scripts/context_sync.py` — PASS using the bundled Python runtime; refreshed `context/AUTO_STATE.md`. Git metadata probes failed because no usable Git root was established.
-- `scripts/context_validate.py` — PASS; reported 18 required files/key sections. This validates keeper structure only.
-- Application tests, lint, type checks, build, security checks, integrations, and deployment — NOT RUN because no application source/configuration is present.
-
-The `python` command is not on PowerShell PATH. Use the bundled runtime path recorded in `docs/REPOSITORY_AUDIT.md` or configure Python for the session.
+- `\.venv\Scripts\python.exe -m unittest discover -s tests -v` — **PASS**, 7 tests: five synthetic tracker checks and two fake-camera worker lifecycle/error checks.
+- `\.venv\Scripts\python.exe -m compileall -q shet_shet scripts\download_model.py tests` — **PASS** after the added test module.
+- `\.venv\Scripts\python.exe -m pip check` — **PASS**, no broken requirements.
+- `Get-FileHash models\face_landmarker.task -Algorithm SHA256` — **PASS**, matches `EXPECTED_SHA256` in `scripts/download_model.py`.
+- Offscreen UI plus MediaPipe blank-frame smoke using the venv Python — **PASS**, UI initialized and blank image yielded zero faces. MediaPipe printed normal CPU/XNNPACK and feedback warnings.
+- `Get-PnpDevice -Class Camera -ErrorAction SilentlyContinue` — **NOT AVAILABLE**, command returned no camera devices; this is an environment limitation, not a pass of camera capture.
+- `\.venv\Scripts\python.exe scripts/context_sync.py` — **PASS**, snapshot fingerprint `99de548828cae27c` before this status note; refresh once more after editing context.
+- `\.venv\Scripts\python.exe scripts/context_validate.py` — **PASS**, 18 required files and key sections.
+- `git diff --check` — **PASS**; only Git LF-to-CRLF working-copy warnings were emitted.
 
 ## Blockers / unknowns
 
-- The actual application repository is not present in this workspace. App runtime, stack, storage, auth, hosting, test tooling, and feature states remain unknown.
-- Provider choices and external credentials may or may not exist in the app; inspect names/configuration safely and never print secret values.
+- No physical camera was exposed by Windows, so actual device access, OS camera permission behavior, face-contour quality, disconnect recovery, and camera release are not confirmed.
+- A blank-frame model smoke proves task initialization/inference only, not detection accuracy on a face.
+- Dependency smoke showed no Clearcut upload text for the pinned MediaPipe version; it is not a comprehensive network audit.
+- Git is available and the repo has a `.git` directory; review `git status` and final diff before handoff. Several app files are currently untracked as initial implementation artifacts.
 
 ## Next action
 
-Open or provide the actual application repository root, merge the keeper safely, then follow `FIRST_RUN_PROMPT.txt` to audit the app before implementation.
+Run `README.md` setup/run instructions on a Windows 11 PC with a webcam and validate the capture lifecycle and visible face contour, then update this state with observed results.
