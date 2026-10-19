@@ -6,13 +6,14 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QSettings, QTimer, QSize
-from PySide6.QtGui import QCloseEvent, QPixmap
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox,
-    QPushButton, QSlider, QVBoxLayout, QWidget,
+    QPushButton, QScrollArea, QSlider, QVBoxLayout, QWidget,
 )
 
 from .camera import CameraScanner, CameraWorker
+from .preview import CameraPreview
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +67,7 @@ class MainWindow(QMainWindow):
 
         content = QHBoxLayout()
         content.setSpacing(18)
-        self.preview = QLabel()
-        self.preview.setObjectName("preview")
-        self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview.setMinimumSize(620, 430)
-        self.preview.setText("CAMERA STANDBY\n\nConnect a camera, then press Start camera")
+        self.preview = CameraPreview()
         content.addWidget(self.preview, 1)
 
         panel = QFrame()
@@ -97,10 +94,16 @@ class MainWindow(QMainWindow):
 
         controls.addSpacing(8)
         controls.addWidget(_label("TRACKING EFFECT", "section"))
-        self.effect_check = QCheckBox("Draw face contour")
+        self.effect_check = QCheckBox("Show tracking effect")
         self.effect_check.setChecked(True)
         self.effect_check.toggled.connect(self._push_options)
         controls.addWidget(self.effect_check)
+        controls.addWidget(_label("Filter style", "caption"))
+        self.filter_style_combo = QComboBox()
+        self.filter_style_combo.addItem("Luminous landmark dots", "dots")
+        self.filter_style_combo.addItem("Face contour", "outline")
+        self.filter_style_combo.currentIndexChanged.connect(self._push_options)
+        controls.addWidget(self.filter_style_combo)
         self.mirror_check = QCheckBox("Mirror preview")
         self.mirror_check.setChecked(True)
         self.mirror_check.toggled.connect(self._push_options)
@@ -136,7 +139,14 @@ class MainWindow(QMainWindow):
         stats.addStretch(1)
         stats.addWidget(self.fps_stat)
         controls.addLayout(stats)
-        content.addWidget(panel)
+        control_scroll = QScrollArea()
+        control_scroll.setObjectName("controlScroll")
+        control_scroll.setFixedWidth(286)
+        control_scroll.setWidgetResizable(True)
+        control_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        control_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        control_scroll.setWidget(panel)
+        content.addWidget(control_scroll)
         page.addLayout(content, 1)
 
         footer = QHBoxLayout()
@@ -154,8 +164,9 @@ class MainWindow(QMainWindow):
             QLabel#title { color: #f8f4ff; font-size: 23px; font-weight: 800; letter-spacing: 1px; }
             QLabel#subtitle { color: #8f8a9f; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
             QLabel#badge { color: #9b96a9; background: #1c1a26; border: 1px solid #302c3b; border-radius: 14px; padding: 8px 13px; font-size: 10px; font-weight: 700; }
-            QLabel#preview { color: #777286; background: #0b0a10; border: 1px solid #2d2938; border-radius: 18px; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+            QWidget#preview { color: #777286; background: #0b0a10; border: 1px solid #2d2938; border-radius: 18px; }
             QFrame#panel { background: #1b1923; border: 1px solid #302c3b; border-radius: 16px; }
+            QScrollArea#controlScroll { background: transparent; border: 0; }
             QLabel#section { color: #8e899d; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
             QLabel#caption { color: #c8c2d4; font-size: 12px; font-weight: 600; }
             QLabel#stat { color: #68f7d5; font-size: 11px; font-weight: 700; }
@@ -182,6 +193,9 @@ class MainWindow(QMainWindow):
     def _restore_settings(self) -> None:
         self.mirror_check.setChecked(self.settings.value("mirror", True, type=bool))
         self.effect_check.setChecked(self.settings.value("effect", True, type=bool))
+        style_index = self.filter_style_combo.findData(self.settings.value("filter_style", "dots"))
+        if style_index >= 0:
+            self.filter_style_combo.setCurrentIndex(style_index)
         self.thickness_slider.setValue(self.settings.value("thickness", 3, type=int))
         self.smoothing_slider.setValue(self.settings.value("smoothing", 55, type=int))
         color = self.settings.value("color", "#68F7D5")
@@ -227,6 +241,7 @@ class MainWindow(QMainWindow):
         return {
             "mirror": self.mirror_check.isChecked(),
             "effect": self.effect_check.isChecked(),
+            "style": self.filter_style_combo.currentData(),
             "color": self.color_combo.currentData(),
             "thickness": self.thickness_slider.value(),
             "smoothing": max(0.05, 1.0 - stability * 0.82),
@@ -235,6 +250,7 @@ class MainWindow(QMainWindow):
     def _push_options(self, *_args) -> None:
         self.settings.setValue("mirror", self.mirror_check.isChecked())
         self.settings.setValue("effect", self.effect_check.isChecked())
+        self.settings.setValue("filter_style", self.filter_style_combo.currentData())
         self.settings.setValue("color", self.color_combo.currentData())
         self.settings.setValue("thickness", self.thickness_slider.value())
         self.settings.setValue("smoothing", self.smoothing_slider.value())
@@ -275,9 +291,15 @@ class MainWindow(QMainWindow):
         else:
             self._worker_finished()
 
-    def _show_frame(self, image, face_count: int, fps: float) -> None:
-        pixmap = QPixmap.fromImage(image)
-        self.preview.setPixmap(pixmap.scaled(self.preview.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+    def _show_frame(self, image, tracks, face_count: int, fps: float) -> None:
+        self.preview.set_frame(
+            image,
+            tracks,
+            effect_enabled=self.effect_check.isChecked(),
+            style=str(self.filter_style_combo.currentData()),
+            color=str(self.color_combo.currentData()),
+            thickness=self.thickness_slider.value(),
+        )
         self.face_stat.setText(f"{face_count} face{'s' if face_count != 1 else ''}")
         self.fps_stat.setText(f"{fps:.0f} FPS")
         self.live_badge.setText("●  CAMERA LIVE")
@@ -314,18 +336,15 @@ class MainWindow(QMainWindow):
             self.live_badge.setText("●  CAMERA OFF")
             self.live_badge.setStyleSheet("")
         self.face_stat.setText("0 faces")
-        if not self._last_error and self.preview.pixmap() is not None:
-            self.preview.clear()
-            self.preview.setText("CAMERA STANDBY\n\nPress Start camera to begin")
+        placeholder = (
+            "CAMERA ISSUE\n\nCheck camera access and try again"
+            if self._last_error
+            else "CAMERA STANDBY\n\nPress Start camera to begin"
+        )
+        self.preview.clear_frame(placeholder)
         if self._pending_restart:
             self._pending_restart = False
             QTimer.singleShot(0, self.start_camera)
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        pixmap = self.preview.pixmap()
-        if pixmap is not None and not pixmap.isNull():
-            self.preview.setPixmap(pixmap.scaled(self.preview.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self.worker and self.worker.isRunning():

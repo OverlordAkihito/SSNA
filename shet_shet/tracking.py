@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import hypot
 from typing import Iterable
 
@@ -13,19 +13,26 @@ Shape = tuple[Point, ...]
 @dataclass(frozen=True)
 class FaceShape:
     points: Shape
+    _center: Point = field(init=False, repr=False, compare=False)
+    _bounds: tuple[float, float, float, float] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if not self.points:
+            object.__setattr__(self, "_center", (0.0, 0.0))
+            object.__setattr__(self, "_bounds", (0.0, 0.0, 0.0, 0.0))
+            return
+        xs = [point[0] for point in self.points]
+        ys = [point[1] for point in self.points]
+        object.__setattr__(self, "_center", (sum(xs) / len(xs), sum(ys) / len(ys)))
+        object.__setattr__(self, "_bounds", (min(xs), min(ys), max(xs), max(ys)))
 
     @property
     def center(self) -> Point:
-        return (
-            sum(point[0] for point in self.points) / len(self.points),
-            sum(point[1] for point in self.points) / len(self.points),
-        )
+        return self._center
 
     @property
     def bounds(self) -> tuple[float, float, float, float]:
-        xs = [point[0] for point in self.points]
-        ys = [point[1] for point in self.points]
-        return min(xs), min(ys), max(xs), max(ys)
+        return self._bounds
 
 
 @dataclass

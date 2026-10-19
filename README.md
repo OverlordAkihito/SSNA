@@ -1,6 +1,6 @@
 # SHET SHET NAKITA AKO
 
-A small Windows desktop camera app that draws a smoothed facial contour around faces visible to your webcam. Camera frames and face landmarks are processed on this PC. The app does not identify people, record video, save snapshots, or send frames to a server.
+A small Windows desktop camera app that overlays luminous facial landmark dots around faces visible to your webcam. Camera frames and face landmarks are processed on this PC. The app does not identify people, record video, save snapshots, or send frames to a server.
 
 ## Requirements
 
@@ -30,11 +30,13 @@ The model script downloads the MediaPipe Face Landmarker task file from Google's
 
 Or double-click `run.bat` after setup.
 
-At startup the app scans camera indexes 0 through 7. Choose a camera and press **Start camera**. Use **Refresh** after plugging in a device. Choose a contour colour, line width, smoothing, mirroring, or turn the contour effect off from the right-hand controls. Preferences are stored with Windows QSettings; camera frames and landmarks are not saved.
+At startup the app scans camera indexes 0 through 7. Choose a camera and press **Start camera**. Use **Refresh** after plugging in a device. Choose the luminous landmark-dot filter or the existing face-contour filter, adjust contour colour and thickness, change tracking smoothing, toggle mirroring, or turn the effect off. Preferences are stored with Windows QSettings; camera frames and landmarks are not saved.
+
+The dot filter uses MediaPipe's detected face-mesh landmarks for the face outline, eyebrows, eyelids/eyes, irises, nose and lips. White dots sit on individual landmarks; a soft magenta halo accents the eye regions. The landmarks are painted on a transparent layer over the preview and use the same aspect-fit frame rectangle, so letterboxing and window resizing do not shift the overlay. The selected mirror option is applied to the frame before detection and display.
 
 ## What “auto-tracking” means here
 
-The app detects face landmarks in the live camera frame and draws a smoothed outline around each detected face. The tracker follows face shapes between frames; it does not identify a person, assign a name, or build an identity profile. Detection and drawing happen locally while the camera is running. No video recording or snapshot feature is provided.
+The app detects face landmarks in the live camera frame and draws smoothed dots or a face outline around each detected face. The tracker follows face shapes between frames; a briefly lost face fades out and can recover on reacquisition. It does not identify a person, assign a name, or build an identity profile. Detection and drawing happen locally while the camera is running. No video recording or snapshot feature is provided.
 
 ## Test
 
@@ -42,7 +44,7 @@ The app detects face landmarks in the live camera frame and draws a smoothed out
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-The tests exercise synthetic face-track behavior and worker processing/cleanup using a fake camera. They do not prove physical webcam access, OS privacy behavior, or real-world face tracking quality.
+The tests exercise synthetic face-track behavior, fake-camera worker processing/cleanup, overlay painting, and preview coordinate mapping across aspect ratios. They do not prove physical webcam access, OS privacy behavior, or real-world face tracking quality.
 
 ## Troubleshooting
 
@@ -56,8 +58,10 @@ The tests exercise synthetic face-track behavior and worker processing/cleanup u
 
 - `shet_shet/main.py` — application entry point and diagnostics.
 - `shet_shet/ui.py` — desktop interface and user controls.
+- `shet_shet/preview.py` — aspect-fit camera preview and transparent landmark-dot/contour painter.
+- `shet_shet/landmarks.py` — MediaPipe facial region landmark index groups.
 - `shet_shet/camera.py` — camera scanning/capture, worker lifecycle, frame display and contour rendering.
-- `shet_shet/vision.py` — MediaPipe Face Landmarker integration and face-oval points.
+- `shet_shet/vision.py` — MediaPipe Face Landmarker integration and normalized full-face coordinates.
 - `shet_shet/tracking.py` — dependency-free multi-face association and smoothing.
 - `scripts/download_model.py` — explicit model downloader.
 - `tests/` — automated tracking logic tests.

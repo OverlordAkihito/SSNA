@@ -8,11 +8,10 @@ import time
 from pathlib import Path
 
 import cv2
-import numpy as np
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtGui import QImage
 
-from .tracking import FaceTracker
+from .tracking import FaceTrack, FaceTracker
 from .vision import FaceLandmarker
 
 logger = logging.getLogger(__name__)
@@ -66,9 +65,9 @@ class CameraWorker(QThread):
         self._options_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._frame_lock = threading.Lock()
-        self._latest: tuple[QImage, int, float] | None = None
+        self._latest: tuple[QImage, tuple[FaceTrack, ...], int, float] | None = None
 
-    def latest_frame(self) -> tuple[QImage, int, float] | None:
+    def latest_frame(self) -> tuple[QImage, tuple[FaceTrack, ...], int, float] | None:
         with self._frame_lock:
             return self._latest
 
@@ -82,7 +81,7 @@ class CameraWorker(QThread):
     def run(self) -> None:
         camera = None
         landmarker = None
-        tracker = FaceTracker()
+        tracker = FaceTracker(max_missed_frames=6)
         try:
             self.status.emit("Opening camera and loading face model…")
             camera = open_camera(self.camera_index)
@@ -115,16 +114,24 @@ class CameraWorker(QThread):
                     logger.exception("Face landmark inference failed for one frame")
                     detections = []
                 tracks = tracker.update(detections, float(options.get("smoothing", 0.35)))
-                if bool(options.get("effect", True)):
-                    self._draw_contours(rgb, tracks, str(options.get("color", "#68F7D5")), int(options.get("thickness", 3)))
 
                 frame_count += 1
                 now = time.perf_counter()
                 fps = frame_count / max(0.001, now - started)
                 h, w, _ = rgb.shape
                 image = QImage(rgb.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+                # Publish a detached per-frame snapshot: FaceTracker mutates its
+                # FaceTrack records on the next iteration while the UI paints.
+                published_tracks = tuple(
+                    FaceTrack(track.track_id, track.shape, track.misses) for track in tracks
+                )
                 with self._frame_lock:
-                    self._latest = (image, sum(track.misses == 0 for track in tracks), fps)
+                    self._latest = (
+                        image,
+                        published_tracks,
+                        sum(track.misses == 0 for track in published_tracks),
+                        fps,
+                    )
         except Exception as exc:
             logger.exception("Camera worker stopped")
             self.failed.emit(str(exc))
@@ -137,25 +144,3 @@ class CameraWorker(QThread):
             if camera is not None:
                 camera.release()
             self.status.emit("Camera stopped")
-
-    @staticmethod
-    def _draw_contours(rgb, tracks, color_hex: str, thickness: int) -> None:
-        color_hex = color_hex.lstrip("#")
-        try:
-            color = tuple(int(color_hex[i:i + 2], 16) for i in (0, 2, 4))
-        except (ValueError, IndexError):
-            color = (104, 247, 213)
-        points_by_track = []
-        height, width = rgb.shape[:2]
-        for track in tracks:
-            points = [[round(x * (width - 1)), round(y * (height - 1))] for x, y in track.shape.points]
-            if len(points) >= 3:
-                points_by_track.append(np.array(points, dtype="int32").reshape((-1, 1, 2)))
-        line_width = max(1, min(12, thickness))
-        if not points_by_track:
-            return
-        glow = rgb.copy()
-        cv2.polylines(glow, points_by_track, True, color, line_width + 5, cv2.LINE_AA)
-        glow = cv2.GaussianBlur(glow, (0, 0), 5)
-        cv2.addWeighted(glow, 0.23, rgb, 0.77, 0, dst=rgb)
-        cv2.polylines(rgb, points_by_track, True, color, line_width, cv2.LINE_AA)

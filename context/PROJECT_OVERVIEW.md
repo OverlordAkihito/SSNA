@@ -2,12 +2,13 @@
 
 ## Purpose
 
-Build a Windows desktop app named **SHET SHET NAKITA AKO** that previews a webcam feed and overlays a smooth face contour. The current implementation processes frames on the local PC and has no recording, snapshot, identity recognition, upload, analytics, or telemetry feature in app code.
+Build a Windows desktop app named **SHET SHET NAKITA AKO** that previews a webcam feed and overlays smooth facial landmark dots or a selectable face contour. The current implementation processes frames on the local PC and has no recording, snapshot, identity recognition, upload, analytics, or telemetry feature in app code.
 
 ## Intended user experience
 
 - Select or refresh the available camera list, start/stop preview, and see useful setup or device errors.
-- See a face outline with configurable colour, thickness, mirror mode, and smoothing.
+- See white dots at detected face, brow, eye, nose, and lip landmarks with a magenta eye glow, or select the original face-outline effect.
+- Keep the overlay aligned as the preview resizes, changes aspect ratio, or is mirrored.
 - Use the app with more than one face in view when MediaPipe detects them.
 - Keep face frames and landmarks transient in memory; persist only UI preferences.
 

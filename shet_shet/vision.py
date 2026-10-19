@@ -1,4 +1,4 @@
-"""MediaPipe Face Landmarker adapter and face-oval extraction."""
+"""MediaPipe Face Landmarker adapter returning normalized full-face coordinates."""
 
 from __future__ import annotations
 
@@ -9,14 +9,8 @@ from typing import Any
 
 import numpy as np
 
+from .landmarks import FACE_DOTS
 from .tracking import FaceShape
-
-# MediaPipe's standard face-mesh oval path, clockwise around forehead and chin.
-FACE_OVAL = (
-    10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365,
-    379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93,
-    234, 127, 162, 21, 54, 103, 67, 109,
-)
 
 
 class FaceLandmarker:
@@ -52,12 +46,12 @@ class FaceLandmarker:
         result = self._task.detect_for_video(image, timestamp_ms)
         shapes: list[FaceShape] = []
         for landmarks in result.face_landmarks:
-            if len(landmarks) <= max(FACE_OVAL):
+            if len(landmarks) <= max(FACE_DOTS):
                 continue
             points = tuple(
                 (min(1.0, max(0.0, float(landmarks[i].x))),
                  min(1.0, max(0.0, float(landmarks[i].y))))
-                for i in FACE_OVAL
+                for i in range(len(landmarks))
             )
             shapes.append(FaceShape(points))
         return shapes

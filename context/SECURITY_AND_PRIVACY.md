@@ -1,6 +1,6 @@
 # Security and Privacy Context
 
-This project is a local webcam preview and face-contour app. It has no user identity, account system, backend, or authorization roles. The context keeper originally carried social-app security requirements; those were not applicable to this app and are superseded here.
+This project is a local webcam preview and facial landmark filter app. It has no user identity, account system, backend, or authorization roles. The context keeper originally carried social-app security requirements; those were not applicable to this app and are superseded here.
 
 ## Identity and authorization
 

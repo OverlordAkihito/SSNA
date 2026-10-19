@@ -61,3 +61,11 @@ This file stores durable decisions, not assumptions disguised as facts. Add an I
 - **Rationale:** Prevents silent startup networking and rejects an unexpected or changed model artifact.
 - **Consequences:** First-time setup requires the explicit model command and network access; app startup reports the missing model with the setup command.
 - **Evidence:** `scripts/download_model.py`, `shet_shet/vision.py`, `README.md`.
+
+### D-009 — Paint tracking overlay in preview coordinates
+
+- **Status:** Confirmed implementation decision
+- **Decision:** Keep the camera image unmodified after RGB conversion and paint the facial effect in a separate Qt preview layer using the same aspect-fit rectangle as the image.
+- **Rationale:** This avoids baking display scaling into capture data and keeps overlay positions aligned while the preview resizes or letterboxes.
+- **Consequences:** Apply mirror transformation before both inference and display; test coordinate mapping independently; verify real face alignment on hardware.
+- **Evidence:** `shet_shet/camera.py`, `shet_shet/preview.py`, `tests/test_preview.py`.

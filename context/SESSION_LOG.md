@@ -20,6 +20,12 @@ Use a date and short heading. Include outcome, important files/decisions, checks
 - Updated README, requirements, architecture, and repository audit to distinguish fake-camera coverage from actual webcam validation.
 - `unittest` now passes 7 tests; `compileall`, `pip check`, and `git diff --check` passed. Physical webcam behavior remains unverified because no camera is available in the environment.
 
+## 2026-10-19 — Real-time facial landmark dot filter
+
+- Kept full MediaPipe face landmark coordinates, added documented region index groups, and introduced a separate aspect-fit Qt preview overlay with pearl dots, magenta eye glow, optional face-contour mode, mirror-consistent coordinates, and brief miss fade. Cached full-mesh geometry for track matching and detached track snapshots before cross-thread UI publication.
+- Updated UI preference persistence, README, requirements, architecture, decisions and audit notes. Camera stop/error now clears the last image from the preview.
+- `unittest` passes 12 checks (tracker, fake-camera worker lifecycle/error/snapshot isolation, overlay painting, and 4:3/16:9 resize/aspect mapping); `compileall` and `pip check` pass. A webcam was still unavailable, so actual face alignment and visual behavior need Windows hardware validation.
+
 ## 2026-10-19 — Camera app build continued; stale context corrected
 
 - Inspected the existing `shet_shet/` implementation and confirmed it is a local PySide6/OpenCV/MediaPipe Windows webcam face-contour app with explicit model download and synthetic tracker tests.
